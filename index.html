@@ -1928,13 +1928,13 @@ function renderSaldoSeparado(){
     '<div class="dash-saldo-bancos">'+
       '<div class="dash-saldo-label">💰 Saldo em Dinheiro</div>'+
       '<div class="dash-saldo-val">'+fmt(s.bancos)+'</div>'+
-      '<button class="dash-ver-btn" onclick="verContasTipo('banco')">Ver por banco →</button>'+
+      '<button class="dash-ver-btn" onclick="verContasTipo(&quot;banco&quot;)">Ver por banco →</button>'+
     '</div>'+
     (s.beneficios||s.contas.some(function(c){return c.tipo==='beneficio';})?
       '<div class="dash-saldo-benef">'+
         '<div class="dash-saldo-label">🍽️ Benefícios</div>'+
         '<div class="dash-saldo-val">'+fmt(s.beneficios)+'</div>'+
-        '<button class="dash-ver-btn" onclick="verContasTipo('beneficio')">Ver por benefício →</button>'+
+        '<button class="dash-ver-btn" onclick="verContasTipo(&quot;beneficio&quot;)">Ver por benefício →</button>'+
       '</div>':'');
 }
 
@@ -4375,9 +4375,6 @@ var OB=(function(){
 /* ══════════════════════════════════════════
    DASHBOARD — saldo separado bancos vs benefícios
 ══════════════════════════════════════════ */
-  var msg=lista.map(function(c){return c.emoji+' '+c.nome+': R$ '+(c.saldo||0).toFixed(2);}).join('\n');
-  alert(msg);
-}
 
 /* DOMContentLoaded — mostra auth por padrão */
 document.addEventListener('DOMContentLoaded',function(){
