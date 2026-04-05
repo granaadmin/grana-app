@@ -849,7 +849,14 @@ img { background: transparent; }
         // Tem nome (veio do cadastro) — ir pro step 1 direto
         document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
         var obs=document.getElementById('s-ob-steps'); if(obs) obs.classList.add('active');
-        if(typeof OB!=='undefined'&&OB.goStep) OB.goStep(1);
+        if(typeof OB!=='undefined'&&OB.goStep) {
+          OB.goStep(1);
+          // Pré-preencher email se disponível
+          setTimeout(function(){
+            var ef=document.getElementById('ob-email-v2');
+            if(ef&&p.email) ef.value=p.email;
+          }, 100);
+        }
       } else {
         document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
         var ob=document.getElementById('s-onboard'); if(ob) ob.classList.add('active');
@@ -1947,7 +1954,7 @@ function renderSaldoSeparado(){
   if(temBenef){
     var benefList=s.contas.filter(function(c){return c.tipo==='beneficio';});
     var benefHtml='<div style="background:rgba(0,100,50,.07);border:1.5px solid rgba(0,150,46,.2);border-radius:14px;overflow:hidden;margin-bottom:10px">';
-    benefHtml+='<button onclick="var d=this.nextElementSibling;d.style.maxHeight=d.style.maxHeight?'':' 300px'" ';
+    benefHtml+='<button onclick="this.nextElementSibling.style.maxHeight=this.nextElementSibling.style.maxHeight?&quot;&quot;:&quot;300px&quot;" ';
     benefHtml+='style="width:100%;display:flex;align-items:center;justify-content:space-between;background:none;border:none;padding:14px 16px;cursor:pointer">';
     benefHtml+='<span style="font-size:.85rem;font-weight:700;color:#005c20">&#x1F37D; Benefícios — '+fmtV(s.beneficios)+'</span>';
     benefHtml+='<span style="color:#005c20">&#x25BE;</span>';
@@ -4197,7 +4204,11 @@ function resetarOnboarding(){
    ONBOARDING — namespace OB (sem recursão)
 ══════════════════════════════════════════ */
 var OB=(function(){
-  var _st={step:0,nome:'',email:'',bancos:[],vales:[],renda:0,dia:5,fixos:{}};
+  var _p0=(function(){try{return JSON.parse(localStorage.getItem('grana2_perfil'));}catch(e){return null;}})();
+  var _st={step:0,
+    nome: (_p0&&_p0.nome)||'',
+    email:(_p0&&_p0.email)||'',
+    bancos:[],vales:[],renda:0,dia:5,fixos:{}};
   var _bc=0,_vc=0;
 
   function _show(n){
