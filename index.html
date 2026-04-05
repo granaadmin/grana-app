@@ -63,15 +63,16 @@ input,textarea,select,button{font-family:'Nunito',sans-serif;}
 ::-webkit-scrollbar-thumb{background:var(--brand-blue-pale);border-radius:99px;}
 
 /* ── LAYOUT ── */
-#app{display:flex;flex-direction:column;min-height:100vh;}
-.screens{flex:1;overflow:hidden;position:relative;}
+#app{display:flex;flex-direction:column;min-height:100vh;height:100vh;overflow:hidden;}
+.screens{flex:1;overflow:hidden;position:relative;height:100%;}
 .screen{
   position:absolute;inset:0;overflow-y:auto;
   padding:0 0 90px;
   opacity:0;pointer-events:none;transform:translateY(12px);
   transition:opacity .25s ease,transform .25s ease;
+  visibility:hidden;
 }
-.screen.active{opacity:1;pointer-events:all;transform:translateY(0);}
+.screen.active{opacity:1;pointer-events:all;transform:translateY(0);visibility:visible;}
 .inner{max-width:480px;margin:0 auto;padding:0 16px;}
 
 #s-dash{
@@ -121,11 +122,12 @@ input,textarea,select,button{font-family:'Nunito',sans-serif;}
 
 /* ── BOTTOM NAV ── */
 .bnav{
-  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  position:fixed;bottom:0;z-index:100;
   background:var(--brand-navy);border-top:1px solid rgba(255,255,255,.1);
   display:flex;padding:10px 0 max(10px,env(safe-area-inset-bottom));
-  max-width:480px;margin:0 auto;left:50%;transform:translateX(-50%);
-  width:100%;box-shadow:0 -4px 20px rgba(13,36,97,.3);
+  width:100%;max-width:480px;
+  left:50%;transform:translateX(-50%);
+  box-shadow:0 -4px 20px rgba(13,36,97,.3);
 }
 .bnav-btn{
   flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
@@ -267,6 +269,7 @@ input,textarea,select,button{font-family:'Nunito',sans-serif;}
 .hero.ok{background:linear-gradient(135deg,var(--brand-navy) 0%,var(--brand-blue) 100%);}
 .hero.warn{background:linear-gradient(135deg,#3D2800 0%,#8B6200 100%);}
 .hero.bad{background:linear-gradient(135deg,#6B1A1A 0%,#922B2B 100%);}
+#d-hero{display:none;} /* hidden by default; shown only if no contas */
 .hero-emoji{font-size:2.5rem;margin-bottom:6px;}
 .hero-lbl{font-size:.68rem;font-weight:800;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;}
 .hero-val{font-family:'Montserrat',sans-serif;font-size:2.4rem;font-weight:900;line-height:1;letter-spacing:-1px;color:white;}
@@ -1400,7 +1403,7 @@ img { background: transparent; }
               </div>
             </div>
           </div>
-          <div class="f" style="margin-top:8px"><label class="lbl">Banco principal</label>
+          <div class="f" style="margin-top:8px"><label class="lbl">Banco principal (conta padrão)</label>
             <select class="inp" id="p-banco">
               <option value="">Selecionar...</option>
               <option value="Nubank">Nubank 🟣</option>
@@ -1422,6 +1425,13 @@ img { background: transparent; }
           <div class="fix-grid" id="fix-grid"></div>
         </div>
 
+        <!-- Minhas contas -->
+        <div class="card" style="margin-bottom:10px">
+          <div class="card-title">🏦 Minhas contas cadastradas</div>
+          <div id="perfil-contas-lista" style="font-size:.85rem;color:#555;line-height:1.8">
+            <!-- preenchido por JS -->
+          </div>
+        </div>
         <button class="btn btn-green btn-full" onclick="salvarPerfil()">💾 Salvar perfil</button>
 
         <div class="card" style="margin-top:8px;border-color:var(--brand-blue-light);background:var(--blue-light)">
@@ -1975,7 +1985,7 @@ function renderSaldoSeparado(){
 }
 
 function getDashSaldos(){
-  var contas=(typeof LS!=='undefined'&&LS.get('contas'))||[];
+  var contas=(typeof LS!=='undefined'&&(LS.get('contas')||LS.get('grana_contas')))||[];
   var bancos=0,beneficios=0;
   contas.forEach(function(c){
     if(c.tipo==='beneficio') beneficios+=c.saldo||0;
@@ -2025,7 +2035,7 @@ function atualizarDash(){
   // Esconder hero se tem contas configuradas (saldo-sep assume o papel)
   var contas = (typeof LS!=='undefined' && LS.get('contas')) || [];
   var heroEl = document.getElementById('d-hero');
-  if(heroEl) heroEl.style.display = contas.length ? 'none' : 'flex';
+  if(heroEl) heroEl.style.display = contas.length ? 'none' : '';
   atualizarUIStats();
 
   const hora = new Date().getHours();
@@ -2501,6 +2511,21 @@ function carregarPerfil(){
   if(keyInp) keyInp.value = p.apiKey ? '••••••••••••' : '';
   renderCatsFix();
   renderRendaExtraLista();
+  // Mostrar contas no perfil
+  var contasEl = document.getElementById('perfil-contas-lista');
+  if(contasEl) {
+    var contas = (typeof LS!=='undefined' && LS.get('contas')) || [];
+    if(contas.length) {
+      contasEl.innerHTML = contas.map(function(c){
+        return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f0f0">' +
+          '<span>' + c.emoji + ' ' + c.nome + '</span>' +
+          '<span style="font-weight:700;color:#0D2461">R$ ' + (c.saldo||0).toFixed(2) + '</span>' +
+          '</div>';
+      }).join('');
+    } else {
+      contasEl.innerHTML = '<p style="color:#aaa;font-size:.82rem">Nenhuma conta cadastrada ainda.</p>';
+    }
+  }
 }
 
 function salvarApiKey(){
