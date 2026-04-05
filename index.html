@@ -1926,38 +1926,45 @@ function renderSaldoSeparado(){
   var el=document.getElementById('dash-saldo-sep');
   if(!el)return;
   var s=getDashSaldos();
-  var fmtV=function(v){return (v<0?'-':'')+'R$ '+(Math.abs(v)).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});};
-  var temBenef = s.contas.some(function(c){return c.tipo==='beneficio';});
-  var html2 =
-    // Saldo bancário em DESTAQUE
-    '<div style="background:var(--brand-navy);border-radius:18px;padding:20px 20px 16px;margin-bottom:10px">'+
-      '<div style="font-size:.72rem;font-weight:700;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">💰 Saldo em conta</div>'+
-      '<div style="font-family:'Montserrat',sans-serif;font-size:2rem;font-weight:900;color:white;margin-bottom:12px">'+fmtV(s.bancos)+'</div>'+
-      (s.contas.filter(function(c){return c.tipo!=='beneficio';}).length > 1
-        ? '<button onclick="verContasTipo('banco')" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:10px;color:rgba(255,255,255,.85);font-size:.78rem;font-weight:700;padding:6px 14px;cursor:pointer;font-family:'Nunito',sans-serif">Ver por banco →</button>'
-        : '')+
-    '</div>'+
-    // Benefícios — colapsável, discreto
-    (temBenef
-      ? '<div style="background:rgba(0,100,50,.08);border:1.5px solid rgba(0,150,46,.2);border-radius:14px;padding:0;overflow:hidden;margin-bottom:10px">'+
-          '<button onclick="this.parentElement.querySelector('.benef-detalhe').classList.toggle('aberto')" '+
-          'style="width:100%;display:flex;align-items:center;justify-content:space-between;background:none;border:none;padding:14px 16px;cursor:pointer;font-family:'Nunito',sans-serif">'+
-            '<span style="font-size:.85rem;font-weight:700;color:#005c20">🍽️ Benefícios — '+fmtV(s.beneficios)+'</span>'+
-            '<span style="color:#005c20;font-size:.8rem">▾</span>'+
-          '</button>'+
-          '<div class="benef-detalhe" style="max-height:0;overflow:hidden;transition:max-height .3s ease">'+
-            '<div style="padding:0 16px 14px;display:flex;flex-direction:column;gap:6px">'+
-              s.contas.filter(function(c){return c.tipo==='beneficio';}).map(function(c){
-                return '<div style="display:flex;justify-content:space-between;font-size:.84rem;color:#333">'+
-                  '<span>'+c.emoji+' '+c.nome+'</span>'+
-                  '<span style="font-weight:700">'+fmtV(c.saldo||0)+'</span>'+
-                '</div>';
-              }).join('')+
-            '</div>'+
-          '</div>'+
-        '</div>'
-      : '');
-  el.innerHTML = html2;
+  var fmtV=function(v){
+    return (v<0?'-':'')+'R$ '+(Math.abs(v)).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  };
+  var temBenef=s.contas.some(function(c){return c.tipo==='beneficio';});
+  var multiBank=s.contas.filter(function(c){return c.tipo!=='beneficio';}).length>1;
+  var parts=[];
+
+  // Saldo bancário — destaque
+  var bankHtml='<div style="background:#0D2461;border-radius:18px;padding:20px 20px 16px;margin-bottom:10px">';
+  bankHtml+='<div style="font-size:.72rem;font-weight:700;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">&#x1F4B0; Saldo em conta</div>';
+  bankHtml+='<div style="font-size:2rem;font-weight:900;color:white;margin-bottom:12px">'+fmtV(s.bancos)+'</div>';
+  if(multiBank){
+    bankHtml+='<button onclick="verContasTipo(&quot;banco&quot;)" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:10px;color:rgba(255,255,255,.85);font-size:.78rem;font-weight:700;padding:6px 14px;cursor:pointer">Ver por banco &#x2192;</button>';
+  }
+  bankHtml+='</div>';
+  parts.push(bankHtml);
+
+  // Benefícios — colapsável
+  if(temBenef){
+    var benefList=s.contas.filter(function(c){return c.tipo==='beneficio';});
+    var benefHtml='<div style="background:rgba(0,100,50,.07);border:1.5px solid rgba(0,150,46,.2);border-radius:14px;overflow:hidden;margin-bottom:10px">';
+    benefHtml+='<button onclick="var d=this.nextElementSibling;d.style.maxHeight=d.style.maxHeight?'':' 300px'" ';
+    benefHtml+='style="width:100%;display:flex;align-items:center;justify-content:space-between;background:none;border:none;padding:14px 16px;cursor:pointer">';
+    benefHtml+='<span style="font-size:.85rem;font-weight:700;color:#005c20">&#x1F37D; Benefícios — '+fmtV(s.beneficios)+'</span>';
+    benefHtml+='<span style="color:#005c20">&#x25BE;</span>';
+    benefHtml+='</button>';
+    benefHtml+='<div style="max-height:0;overflow:hidden;transition:max-height .3s ease">';
+    benefHtml+='<div style="padding:0 16px 14px">';
+    benefList.forEach(function(c){
+      benefHtml+='<div style="display:flex;justify-content:space-between;font-size:.84rem;color:#333;padding:4px 0">';
+      benefHtml+='<span>'+c.emoji+' '+c.nome+'</span>';
+      benefHtml+='<span style="font-weight:700">'+fmtV(c.saldo||0)+'</span>';
+      benefHtml+='</div>';
+    });
+    benefHtml+='</div></div></div>';
+    parts.push(benefHtml);
+  }
+
+  el.innerHTML=parts.join('');
 }
 
 function getDashSaldos(){
@@ -4212,7 +4219,7 @@ var OB=(function(){
         if(d){d.classList.remove('on');if(i===n)d.classList.add('on');}
       });
       // render fix-grid on step 4
-      if(n===4&&typeof renderCatsFix==='function'){
+      if(n===4){
         var fg=document.getElementById('ob-fix-grid');
         if(fg&&typeof CATS_FIX!=='undefined'){
           fg.innerHTML='';
